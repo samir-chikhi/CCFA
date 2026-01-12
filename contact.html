@@ -1,117 +1,102 @@
-<!DOCTYPE html>
-<html lang="fr">
+<!doctype html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Contact - CCFA</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
-  <!-- Calendly widget CSS (used for inline embed) -->
-  <link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Contact</title>
+  <style>
+    /* Minimal styles for in-page status */
+    .status { margin-top: 1rem; font-size: 0.95rem; }
+    .status.success { color: #0a7f3a; }
+    .status.error { color: #c62828; }
+    button.disabled { opacity: 0.6; pointer-events: none; }
+    label { display: block; margin: 0.5rem 0; }
+    input, textarea { width: 100%; max-width: 480px; padding: 0.5rem; box-sizing: border-box; }
+  </style>
 </head>
 <body>
-  <header class="main-header">
-    <nav class="navbar">
-      <div class="container">
-        <div class="nav-wrapper">
-          <div class="logo">
-            <a href="index.html">
-              <span class="logo-text">CCFA</span>
-              <span class="logo-subtitle">Chikhi Conseil Formation Audit</span>
-            </a>
-          </div>
-          <ul class="nav-menu">
-            <li><a href="a-propos.html">À PROPOS</a></li>
-            <li><a href="tarifs.html">TARIFS</a></li>
-            <li><a href="contact.html" class="btn-contact">NOUS CONTACTER</a></li>
-          </ul>
-        </div>
-      </div>
-    </nav>
-  </header>
+  <h1>Contact</h1>
 
-  <main class="container" style="padding:40px 20px;">
-    <h1>Contact</h1>
-    <p>Vous pouvez nous contacter par téléphone, par email, ou prendre directement un rendez-vous en ligne via Calendly.</p>
+  <form id="contact-form" method="POST" novalidate>
+    <label>
+      Name
+      <input type="text" name="name" required>
+    </label>
 
-    <section style="display:flex;gap:40px;flex-wrap:wrap;">
-      <div style="flex:1;min-width:300px;">
-        <h2>Coordonnées</h2>
-        <p><strong>Téléphone:</strong> <a href="tel:+33652813822">06 52 81 38 22</a></p>
-        <p><strong>Email:</strong> <a href="mailto:contact@c2fa.fr">contact@c2fa.fr</a></p>
-        <p><strong>Adresse:</strong><br>12 rue du Génie<br>82000 Montauban</p>
+    <label>
+      Email
+      <input type="email" name="email" required>
+    </label>
 
-        <h3>Prendre rendez-vous</h3>
-        <!-- Calendly popup button; remplacez l'URL si besoin -->
-        <button id="calendly-popup" style="padding:12px 18px;border-radius:6px;background:#667eea;color:#fff;border:none;cursor:pointer;">Prendre RDV (Calendly)</button>
+    <label>
+      Message
+      <textarea name="message" rows="6" required></textarea>
+    </label>
 
-        <h3>Formulaire de contact</h3>
-        <!-- Formulaire : envoi via Formspree (ID mis à jour) -->
-        <form id="contact-form" action="https://formspree.io/f/mdaankrd" method="POST">
-          <label for="name">Nom</label><br>
-          <input id="name" name="name" type="text" required style="width:100%;padding:8px;margin-bottom:8px;"><br>
-          <label for="email">Email</label><br>
-          <input id="email" name="email" type="email" required style="width:100%;padding:8px;margin-bottom:8px;"><br>
-          <label for="message">Message</label><br>
-          <textarea id="message" name="message" rows="6" required style="width:100%;padding:8px;margin-bottom:8px;"></textarea><br>
-          <button type="submit" style="padding:10px 16px;border-radius:6px;background:#38b2ac;color:#fff;border:none;cursor:pointer;">Envoyer</button>
-        </form>
+    <button id="contact-submit" type="submit">Send</button>
 
-        <p style="margin-top:12px;color:#666;font-size:14px;">Si vous ne souhaitez pas configurer Formspree immédiatement, vous pouvez utiliser l'email ci‑dessus (mailto) comme solution temporaire.</p>
-      </div>
+    <div id="contact-status" class="status" aria-live="polite"></div>
+  </form>
 
-      <div style="flex:1;min-width:320px;">
-        <h2>Calendrier</h2>
-        <p>Le calendrier ci‑dessous affiche mes disponibilités. Si l'intégration ne fonctionne pas, utilisez le bouton "Prendre RDV" ou ouvrez directement : <a href="https://calendly.com/samir-chikhi" target="_blank" rel="noopener">https://calendly.com/samir-chikhi</a></p>
-
-        <!-- Calendly inline widget (remplacez l'URL si besoin) -->
-        <div class="calendly-inline-widget" data-url="https://calendly.com/samir-chikhi" style="min-width:320px;height:700px;"></div>
-      </div>
-    </section>
-
-    <hr style="margin:40px 0;">
-    <p><a href="index.html">← Retour à l'accueil</a></p>
-  </main>
-
-  <footer class="main-footer" style="padding:30px 20px;background:#f7fafc;margin-top:40px;">
-    <div class="container">
-      <div style="display:flex;gap:20px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:220px;">
-          <strong>CCFA</strong><br>
-          12 rue du Génie, 82000 Montauban<br>
-          <a href="mailto:contact@c2fa.fr">contact@c2fa.fr</a> — <a href="tel:+33652813822">06 52 81 38 22</a>
-        </div>
-        <div style="flex:1;min-width:220px;">
-          <strong>Horaires</strong><br>
-          Lun–Ven : 9h–12h30 / 14h–18h
-        </div>
-      </div>
-      <p style="margin-top:16px;color:#666;">&copy; 2024 CCFA - Tous droits réservés</p>
-    </div>
-  </footer>
-
-  <!-- Calendly widget JS (popup) -->
-  <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
   <script>
-    // Popup init for Calendly button
-    document.getElementById('calendly-popup').addEventListener('click', function () {
-      if (window.Calendly && Calendly.initPopupWidget) {
-        Calendly.initPopupWidget({ url: 'https://calendly.com/samir-chikhi' });
-      } else {
-        // fallback: open Calendly in new tab
-        window.open('https://calendly.com/samir-chikhi', '_blank');
-      }
-    });
+  (function () {
+    var form = document.getElementById('contact-form');
+    var btn = document.getElementById('contact-submit');
+    var statusEl = document.getElementById('contact-status');
+    // Formspree endpoint
+    var endpoint = 'https://formspree.io/f/mdaankrd';
 
-    // Optional: handle form submission gracefully with a simple success message (works if Formspree ID is set)
-    document.getElementById('contact-form').addEventListener('submit', function (e) {
-      // let the browser submit the form to Formspree; you can enhance with AJAX if desired
-      setTimeout(function () {
-        alert('Merci — votre message a été envoyé.');
-      }, 200);
+    function setStatus(text, type) {
+      statusEl.textContent = text || '';
+      statusEl.className = 'status' + (type ? ' ' + type : '');
+    }
+
+    function disableSending(disabled) {
+      btn.disabled = disabled;
+      if (disabled) btn.classList.add('disabled'); else btn.classList.remove('disabled');
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault(); // prevent default navigation
+
+      // Prevent double submissions
+      if (btn.disabled) return;
+
+      setStatus('Sending…');
+      disableSending(true);
+
+      var formData = new FormData(form);
+
+      // Send via fetch to Formspree
+      fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json'
+        },
+        body: formData
+      }).then(function (response) {
+        disableSending(false);
+        if (response.ok) {
+          setStatus('Thanks — your message has been sent!', 'success');
+          try { form.reset(); } catch (err) { /* ignore reset errors */ }
+        } else {
+          // Try to extract JSON error message
+          return response.json().then(function (data) {
+            var msg = 'Submission failed. Please try again.';
+            if (data && data.error) msg = data.error;
+            setStatus(msg, 'error');
+          }).catch(function () {
+            setStatus('Submission failed. Please try again.', 'error');
+          });
+        }
+      }).catch(function (err) {
+        disableSending(false);
+        setStatus('Network error. Please check your connection and try again.', 'error');
+        // keep console message to help debugging
+        console.error('Form submission error:', err);
+      });
     });
+  })();
   </script>
 </body>
 </html>
