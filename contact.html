@@ -2,140 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Contact - CCFA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contact</title>
   <style>
-    body { font-family: system-ui, -apple-system, Roboto, "Helvetica Neue", Arial; padding: 2rem; max-width: 800px; margin: 0 auto; }
-    .container { padding: 1rem; }
-    label { display: block; margin-top: 0.75rem; }
-    input[type="email"], textarea { width: 100%; padding: 0.6rem; margin-top: 0.25rem; box-sizing: border-box; }
-    button { margin-top: 1rem; padding: 0.6rem 1rem; }
-    #form-status { margin-top: 1rem; }
-    .success { color: green; }
-    .error { color: red; }
+    body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial; padding: 2rem; }
+    form { max-width: 600px; display: grid; gap: 0.5rem; }
+    label { font-weight: 600; }
+    input, textarea { padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
+    button { padding: 0.6rem 1rem; border: none; background: #0366d6; color: #fff; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #024f9c; }
   </style>
 </head>
 <body>
-  <main class="container">
-    <h1>Contact Us</h1>
-    <p>If you have questions or need to reach out, please use the form below.</p>
+  <h1>Contact</h1>
+  <p>Please use the form below to send a message. This test form posts to Formspree.</p>
 
-    <!-- Contact form section: AJAX submission to Formspree -->
-    <form id="contact-form" method="POST" action="https://formspree.io/f/mdaankrd">
-      <label for="name">Name (optional)</label>
-      <input id="name" name="name" type="text" placeholder="Your name">
+  <form action="https://formspree.io/f/mdaankrd" method="POST">
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" required>
 
-      <label for="email">Email *</label>
-      <input id="email" name="email" type="email" placeholder="you@example.com" required>
+    <label for="email">Email</label>
+    <input type="email" id="email" name="_replyto" required>
 
-      <label for="message">Message *</label>
-      <textarea id="message" name="message" rows="6" placeholder="Your message" required></textarea>
+    <label for="message">Message</label>
+    <textarea id="message" name="message" rows="6" required></textarea>
 
-      <button type="submit">Send</button>
-      <div id="form-status" role="status" aria-live="polite"></div>
-    </form>
+    <!-- Optional: set a subject for the email received from Formspree -->
+    <input type="hidden" name="_subject" value="Website contact form submission">
 
-  </main>
+    <button type="submit">Send</button>
+  </form>
 
-  <script>
-    (function () {
-      // Ensure code runs after DOM is fully loaded
-      document.addEventListener('DOMContentLoaded', function () {
-        const form = document.getElementById('contact-form');
-        const statusEl = document.getElementById('form-status');
-
-        if (!form) {
-          // If the form is missing, nothing to do
-          return;
-        }
-
-        form.addEventListener('submit', async function (event) {
-          event.preventDefault();
-
-          // Clear previous status
-          statusEl.textContent = '';
-          statusEl.className = '';
-
-          // Basic client-side validation: ensure required fields are present
-          const emailInput = form.elements['email'];
-          const messageInput = form.elements['message'];
-
-          if (!emailInput || !messageInput) {
-            statusEl.textContent = 'Form is missing required fields.';
-            statusEl.className = 'error';
-            return;
-          }
-
-          const email = emailInput.value.trim();
-          const message = messageInput.value.trim();
-
-          if (!email) {
-            statusEl.textContent = 'Please provide your email.';
-            statusEl.className = 'error';
-            emailInput.focus();
-            return;
-          }
-
-          if (!message) {
-            statusEl.textContent = 'Please enter a message.';
-            statusEl.className = 'error';
-            messageInput.focus();
-            return;
-          }
-
-          // Disable form inputs while submitting
-          const formElements = Array.from(form.elements);
-          formElements.forEach(function (el) { el.disabled = true; });
-
-          statusEl.textContent = 'Sending...';
-
-          try {
-            // Send via Formspree AJAX endpoint
-            const formData = new FormData(form);
-
-            const response = await fetch(form.action, {
-              method: 'POST',
-              body: formData,
-              headers: {
-                'Accept': 'application/json'
-              }
-            });
-
-            if (response.ok) {
-              // Formspree returns 200/201 for success; also check JSON
-              const data = await response.json().catch(function () { return {}; });
-
-              statusEl.textContent = 'Thank you! Your message has been sent.';
-              statusEl.className = 'success';
-
-              // Reset the form
-              form.reset();
-            } else {
-              // Try to parse JSON error message
-              let errText = 'An error occurred while sending your message. Please try again later.';
-              try {
-                const err = await response.json();
-                if (err && err.error) {
-                  errText = err.error;
-                }
-              } catch (parseErr) {
-                // ignore JSON parse errors
-              }
-
-              statusEl.textContent = errText;
-              statusEl.className = 'error';
-            }
-          } catch (networkError) {
-            // Network or other error
-            statusEl.textContent = 'Network error: please check your connection and try again.';
-            statusEl.className = 'error';
-          } finally {
-            // Re-enable form elements
-            formElements.forEach(function (el) { el.disabled = false; });
-          }
-        });
-      });
-    })();
-  </script>
+  <p>After submission Formspree will handle the response. This page is a temporary test implementation.</p>
 </body>
 </html>
