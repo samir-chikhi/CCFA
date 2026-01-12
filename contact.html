@@ -3,100 +3,237 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Contact</title>
+  <title>Contact — CCFA</title>
+  <meta name="description" content="Contact form for CCFA">
   <style>
-    /* Minimal styles for in-page status */
-    .status { margin-top: 1rem; font-size: 0.95rem; }
-    .status.success { color: #0a7f3a; }
-    .status.error { color: #c62828; }
-    button.disabled { opacity: 0.6; pointer-events: none; }
-    label { display: block; margin: 0.5rem 0; }
-    input, textarea { width: 100%; max-width: 480px; padding: 0.5rem; box-sizing: border-box; }
+    /* Minimal styles to keep the page readable and show status messages */
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 1rem; }
+    .container { max-width: 720px; margin: 0 auto; }
+    form { display: grid; gap: 0.5rem; }
+    label { font-weight: 600; }
+    input[type="text"], input[type="email"], textarea { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
+    button { padding: 0.6rem 1rem; border: none; background: #0366d6; color: white; border-radius: 4px; cursor: pointer; }
+    button[disabled] { opacity: 0.6; cursor: not-allowed; }
+    .status { margin-top: 1rem; padding: 0.75rem; border-radius: 4px; }
+    .status.success { background: #e6ffed; color: #0b7a3d; border: 1px solid #c6f6d5; }
+    .status.error { background: #fff0f0; color: #c53030; border: 1px solid #fed7d7; }
+    .spinner { display: inline-block; vertical-align: middle; width: 1rem; height: 1rem; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin-left: 0.5rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .calendly-button { background: #00a2ff; margin-top: 1rem; }
+    .calendly-inline-widget { min-width: 320px; height: 630px; }
   </style>
+  <!-- Calendly widget CSS (optional but recommended) -->
+  <link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet">
 </head>
 <body>
-  <h1>Contact</h1>
+  <main class="container">
+    <h1>Contact</h1>
+    <p>If you'd like to get in touch, please use the form below or schedule time via Calendly.</p>
 
-  <form id="contact-form" method="POST" novalidate>
-    <label>
-      Name
-      <input type="text" name="name" required>
-    </label>
+    <form id="contact-form" novalidate>
+      <div>
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" required>
+      </div>
 
-    <label>
-      Email
-      <input type="email" name="email" required>
-    </label>
+      <div>
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required>
+      </div>
 
-    <label>
-      Message
-      <textarea name="message" rows="6" required></textarea>
-    </label>
+      <div>
+        <label for="message">Message</label>
+        <textarea id="message" name="message" rows="6" required></textarea>
+      </div>
 
-    <button id="contact-submit" type="submit">Send</button>
+      <!-- Honeypot field to reduce spam; visually hidden but present for bots -->
+      <div style="display:none;">
+        <label for="website">Website</label>
+        <input type="text" id="website" name="website" autocomplete="off">
+      </div>
 
-    <div id="contact-status" class="status" aria-live="polite"></div>
-  </form>
+      <div>
+        <button type="submit" id="submit-btn">Send message</button>
+      </div>
+
+      <!-- In-page status messages; uses aria-live for accessibility -->
+      <div id="form-status" class="status" role="status" aria-live="polite" style="display:none;"></div>
+    </form>
+
+    <div>
+      <button type="button" class="calendly-button" id="open-calendly">Schedule a meeting (Calendly)</button>
+    </div>
+
+    <!-- Inline Calendly container (optional: can be used for embedding directly on the page) -->
+    <div id="calendly-inline" style="margin-top:1rem;display:none;">
+      <div class="calendly-inline-widget" data-url="https://calendly.com/" id="calendly-widget" style="min-width:320px;height:630px;"></div>
+    </div>
+
+  </main>
+
+  <!-- Calendly widget script (loads asynchronously) -->
+  <script async src="https://assets.calendly.com/assets/external/widget.js"></script>
 
   <script>
-  (function () {
-    var form = document.getElementById('contact-form');
-    var btn = document.getElementById('contact-submit');
-    var statusEl = document.getElementById('contact-status');
-    // Formspree endpoint
-    var endpoint = 'https://formspree.io/f/mdaankrd';
+    (function () {
+      'use strict';
 
-    function setStatus(text, type) {
-      statusEl.textContent = text || '';
-      statusEl.className = 'status' + (type ? ' ' + type : '');
-    }
+      // Replace with your Formspree endpoint
+      var FORMSPREE_ENDPOINT = 'https://formspree.io/f/mdaankrd';
 
-    function disableSending(disabled) {
-      btn.disabled = disabled;
-      if (disabled) btn.classList.add('disabled'); else btn.classList.remove('disabled');
-    }
+      var form = document.getElementById('contact-form');
+      var submitBtn = document.getElementById('submit-btn');
+      var statusEl = document.getElementById('form-status');
 
-    form.addEventListener('submit', function (e) {
-      e.preventDefault(); // prevent default navigation
+      function showStatus(message, type) {
+        statusEl.textContent = message;
+        statusEl.className = 'status ' + (type === 'success' ? 'success' : 'error');
+        statusEl.style.display = 'block';
+      }
 
-      // Prevent double submissions
-      if (btn.disabled) return;
+      function hideStatus() {
+        statusEl.style.display = 'none';
+        statusEl.textContent = '';
+        statusEl.className = 'status';
+      }
 
-      setStatus('Sending…');
-      disableSending(true);
-
-      var formData = new FormData(form);
-
-      // Send via fetch to Formspree
-      fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json'
-        },
-        body: formData
-      }).then(function (response) {
-        disableSending(false);
-        if (response.ok) {
-          setStatus('Thanks — your message has been sent!', 'success');
-          try { form.reset(); } catch (err) { /* ignore reset errors */ }
+      function setLoading(isLoading) {
+        if (isLoading) {
+          submitBtn.disabled = true;
+          // add spinner if not present
+          if (!submitBtn.querySelector('.spinner')) {
+            var spinner = document.createElement('span');
+            spinner.className = 'spinner';
+            spinner.setAttribute('aria-hidden', 'true');
+            submitBtn.appendChild(spinner);
+          }
         } else {
-          // Try to extract JSON error message
-          return response.json().then(function (data) {
-            var msg = 'Submission failed. Please try again.';
-            if (data && data.error) msg = data.error;
-            setStatus(msg, 'error');
-          }).catch(function () {
-            setStatus('Submission failed. Please try again.', 'error');
-          });
+          submitBtn.disabled = false;
+          var spinnerEl = submitBtn.querySelector('.spinner');
+          if (spinnerEl) spinnerEl.remove();
         }
-      }).catch(function (err) {
-        disableSending(false);
-        setStatus('Network error. Please check your connection and try again.', 'error');
-        // keep console message to help debugging
-        console.error('Form submission error:', err);
+      }
+
+      // Serialize form fields to an object (ignoring honeypot)
+      function serializeForm(formEl) {
+        var obj = {};
+        var formData = new FormData(formEl);
+        formData.forEach(function (value, key) {
+          if (key === 'website') return; // honeypot field, skip
+          obj[key] = value;
+        });
+        return obj;
+      }
+
+      form.addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        hideStatus();
+
+        // Basic client-side validation
+        if (!form.checkValidity()) {
+          showStatus('Please fill out all required fields correctly.', 'error');
+          return;
+        }
+
+        var payload = serializeForm(form);
+
+        setLoading(true);
+
+        // Send JSON to Formspree. Formspree accepts JSON payloads when Accept header is set.
+        fetch(FORMSPREE_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        })
+        .then(function (response) {
+          setLoading(false);
+          if (response.ok) {
+            return response.json().catch(function () { return {}; });
+          }
+          return response.json().then(function (data) {
+            // Extract error message if available
+            var err = (data && data.error) ? data.error : ('Request failed with status ' + response.status);
+            throw new Error(err);
+          }).catch(function (err) {
+            // If parsing failed, throw a generic error
+            if (typeof err === 'string') throw new Error(err);
+            throw new Error('Submission failed.');
+          });
+        })
+        .then(function () {
+          // Success
+          showStatus('Thanks — your message has been sent. I will get back to you soon.', 'success');
+          form.reset();
+        })
+        .catch(function (error) {
+          console.error('Form submission error:', error);
+          showStatus('Sorry — there was a problem sending your message. Please try again or email directly.', 'error');
+        });
       });
-    });
-  })();
+
+      // Calendly integration: open popup or inline widget safely
+      function loadCalendlyScript(callback) {
+        // If Calendly is already present, call callback immediately
+        if (window.Calendly) {
+          callback();
+          return;
+        }
+        // Otherwise, wait until the external script loads (it was included with async attribute)
+        var attempts = 0;
+        var check = function () {
+          attempts++;
+          if (window.Calendly) {
+            callback();
+            return;
+          }
+          if (attempts > 20) {
+            console.warn('Calendly did not load in time.');
+            return;
+          }
+          setTimeout(check, 200);
+        };
+        check();
+      }
+
+      function openCalendlyPopup(url) {
+        loadCalendlyScript(function () {
+          try {
+            // Use Calendly popup widget if available
+            if (window.Calendly && typeof window.Calendly.initPopupWidget === 'function') {
+              window.Calendly.initPopupWidget({ url: url });
+            } else {
+              // Fallback: open Calendly URL in a new tab
+              window.open(url, '_blank', 'noopener');
+            }
+          } catch (err) {
+            console.error('Error opening Calendly:', err);
+            window.open(url, '_blank', 'noopener');
+          }
+        });
+      }
+
+      // Button to open Calendly popup. Update data-calendly-url if you have a specific scheduling link.
+      var calendlyBtn = document.getElementById('open-calendly');
+      calendlyBtn.addEventListener('click', function () {
+        var calendlyUrl = calendlyBtn.getAttribute('data-calendly-url') || 'https://calendly.com/';
+        openCalendlyPopup(calendlyUrl);
+      });
+
+      // Optional: show inline widget when clicking the button (toggle)
+      var calendlyInlineContainer = document.getElementById('calendly-inline');
+      calendlyBtn.addEventListener('dblclick', function () {
+        // Double-click to toggle inline embed visibility (non-destructive)
+        if (calendlyInlineContainer.style.display === 'none') {
+          calendlyInlineContainer.style.display = 'block';
+        } else {
+          calendlyInlineContainer.style.display = 'none';
+        }
+      });
+
+    })();
   </script>
 </body>
 </html>
