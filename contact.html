@@ -2,37 +2,222 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Contact</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Contact — CCFA</title>
   <style>
-    body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial; padding: 2rem; }
-    form { max-width: 600px; display: grid; gap: 0.5rem; }
-    label { font-weight: 600; }
-    input, textarea { padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
-    button { padding: 0.6rem 1rem; border: none; background: #0366d6; color: #fff; border-radius: 4px; cursor: pointer; }
-    button:hover { background: #024f9c; }
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0;padding:24px;background:#f7f9fb;color:#0b1220}
+    .container{max-width:800px;margin:0 auto}
+    h1{margin-top:0}
+    form{background:#fff;padding:16px;border-radius:8px;box-shadow:0 2px 8px rgba(11,18,32,0.06)}
+    label{display:block;margin-top:12px;font-weight:600}
+    input[type=text], input[type=email], textarea, select{width:100%;padding:10px;border:1px solid #d6dde6;border-radius:6px;margin-top:6px}
+    textarea{min-height:140px;resize:vertical}
+    .row{display:flex;gap:12px}
+    .col{flex:1}
+    .actions{margin-top:16px;display:flex;gap:12px;align-items:center}
+    button{background:#0b74de;color:white;border:none;padding:10px 16px;border-radius:6px;cursor:pointer}
+    .secondary{background:#eef3fb;color:#0b1220}
+    .note{font-size:0.9rem;color:#334155;margin-top:8px}
+    .hidden-honeypot{position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden}
+    .status{margin-top:12px}
+    .calendly-wrap{margin-top:24px}
   </style>
 </head>
 <body>
-  <h1>Contact</h1>
-  <p>Please use the form below to send a message. This test form posts to Formspree.</p>
+  <div class="container">
+    <h1>Contact</h1>
+    <p class="note">Use this form to reach out. If JavaScript is disabled or Formspree is unavailable we'll provide a mailto fallback.</p>
 
-  <form action="https://formspree.io/f/mdaankrd" method="POST">
-    <label for="name">Name</label>
-    <input type="text" id="name" name="name" required>
+    <form id="contact-form" novalidate>
+      <!-- Honeypot field for bots (kept off-screen) -->
+      <div class="hidden-honeypot" aria-hidden="true">
+        <label for="website">If you are human, leave this field blank</label>
+        <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+      </div>
 
-    <label for="email">Email</label>
-    <input type="email" id="email" name="_replyto" required>
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" required>
 
-    <label for="message">Message</label>
-    <textarea id="message" name="message" rows="6" required></textarea>
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required>
 
-    <!-- Optional: set a subject for the email received from Formspree -->
-    <input type="hidden" name="_subject" value="Website contact form submission">
+      <label for="subject">Subject</label>
+      <input type="text" id="subject" name="subject">
 
-    <button type="submit">Send</button>
-  </form>
+      <label for="message">Message</label>
+      <textarea id="message" name="message" required></textarea>
 
-  <p>After submission Formspree will handle the response. This page is a temporary test implementation.</p>
+      <div class="actions">
+        <button type="submit" id="send">Send message</button>
+        <button type="button" class="secondary" id="open-calendar">Schedule time (Calendly)</button>
+        <div class="status" id="status" aria-live="polite"></div>
+      </div>
+
+      <p class="note">By submitting you agree to our privacy policy.</p>
+    </form>
+
+    <div class="calendly-wrap" id="calendly-embed" style="display:none;">
+      <!-- Inline Calendly widget -->
+      <div id="calendly" style="height:640px;"></div>
+    </div>
+
+  </div>
+
+  <script>
+    (function(){
+      const form = document.getElementById('contact-form');
+      const statusEl = document.getElementById('status');
+      const sendBtn = document.getElementById('send');
+      const calendlyWrap = document.getElementById('calendly-embed');
+      const openCalBtn = document.getElementById('open-calendar');
+
+      // Replace with your Formspree endpoint (e.g. https://formspree.io/f/yourFormId)
+      const FORMSPREE_ENDPOINT = 'https://formspree.io/f/REPLACE_WITH_YOUR_ID';
+      // Replace with your Calendly link, e.g. https://calendly.com/yourname/30min
+      const CALENDLY_URL = 'https://calendly.com/REPLACE_WITH_YOUR_CALENDLY';
+
+      function setStatus(message, isError){
+        statusEl.textContent = message;
+        statusEl.style.color = isError ? '#b91c1c' : '#0b6623';
+      }
+
+      function buildMailto(data){
+        const to = data.email || '';
+        const subject = encodeURIComponent(data.subject || 'Contact from website');
+        const bodyLines = [];
+        if (data.name) bodyLines.push('Name: ' + data.name);
+        if (data.email) bodyLines.push('Email: ' + data.email);
+        if (data.message) bodyLines.push('\n' + data.message);
+        const body = encodeURIComponent(bodyLines.join('\n'));
+        return 'mailto:' + to + '?subject=' + subject + '&body=' + body;
+      }
+
+      async function submitToFormspree(formData){
+        try{
+          const res = await fetch(FORMSPREE_ENDPOINT, {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json'
+            },
+            body: formData
+          });
+
+          if (res.ok){
+            return {ok:true};
+          }
+
+          // Try to parse JSON error message
+          try{
+            const payload = await res.json();
+            return {ok:false, error: payload.error || JSON.stringify(payload)};
+          }catch(e){
+            return {ok:false, error: 'Unknown error from Formspree'};
+          }
+        }catch(err){
+          return {ok:false, error: err.message || 'Network error'};
+        }
+      }
+
+      form.addEventListener('submit', async function(e){
+        e.preventDefault();
+        setStatus('Sending...', false);
+        sendBtn.disabled = true;
+
+        // Honeypot check
+        const honeypot = form.querySelector('[name="website"]').value;
+        if (honeypot){
+          // Detected bot — show generic success message to avoid leaking info
+          setStatus('Thank you for your message.', false);
+          sendBtn.disabled = false;
+          form.reset();
+          return;
+        }
+
+        const name = form.name.value.trim();
+        const email = form.email.value.trim();
+        const subject = form.subject.value.trim();
+        const message = form.message.value.trim();
+
+        if (!email || !message){
+          setStatus('Please provide at least an email and a message.', true);
+          sendBtn.disabled = false;
+          return;
+        }
+
+        const fd = new FormData();
+        fd.append('name', name);
+        fd.append('email', email);
+        fd.append('subject', subject);
+        fd.append('message', message);
+        // Add a small timestamp to help avoid duplicate processing
+        fd.append('timestamp', new Date().toISOString());
+
+        // Try AJAX Formspree
+        const result = await submitToFormspree(fd);
+        if (result.ok){
+          setStatus('Message sent — thank you! We will get back to you shortly.', false);
+          form.reset();
+          sendBtn.disabled = false;
+          return;
+        }
+
+        // Fallback: use mailto (opens user's email client)
+        setStatus('Formspree failed: ' + (result.error || 'fallback to email client'), true);
+        // Build mailto using site owner's email if available. Note: using visitor email as 'to' may not be desirable.
+        // A safer fallback is to open user's mail client addressed to site owner. Replace OWNER_EMAIL below.
+        const OWNER_EMAIL = 'owner@example.com';
+        const mailtoTo = OWNER_EMAIL || email || '';
+        const body = `Name: ${name}\nEmail: ${email}\n\n${message}`;
+        const mailto = `mailto:${encodeURIComponent(mailtoTo)}?subject=${encodeURIComponent(subject || 'Contact from website')}&body=${encodeURIComponent(body)}`;
+
+        // Open mailto in a new window
+        window.location.href = mailto;
+        sendBtn.disabled = false;
+      });
+
+      // Calendly open handler — lazy-load the Calendly widget on demand
+      openCalBtn.addEventListener('click', function(){
+        if (calendlyWrap.style.display === 'none'){
+          calendlyWrap.style.display = 'block';
+          // Inject Calendly script if not already present
+          if (!window.Calendly){
+            const s = document.createElement('script');
+            s.src = 'https://assets.calendly.com/assets/external/widget.js';
+            s.async = true;
+            s.onload = function(){
+              Calendly.initInlineWidget({
+                url: CALENDLY_URL,
+                parentElement: document.getElementById('calendly'),
+                prefill: {},
+                utm: {}
+              });
+            };
+            document.body.appendChild(s);
+          }else{
+            Calendly.initInlineWidget({
+              url: CALENDLY_URL,
+              parentElement: document.getElementById('calendly')
+            });
+          }
+        }else{
+          calendlyWrap.style.display = 'none';
+        }
+      });
+
+      // Basic progressive enhancement: if JS disabled, show a classic form action (non-AJAX)
+      // This code also ensures the honeypot is not focused by assistive tech.
+      document.querySelectorAll('.hidden-honeypot input').forEach(function(inp){
+        inp.setAttribute('aria-hidden','true');
+        inp.tabIndex = -1;
+      });
+
+    })();
+  </script>
+
+  <noscript>
+    <div style="background:#fff;padding:12px;border-radius:8px;margin-top:12px;">
+      <p><strong>JavaScript is disabled.</strong> Please send email to owner@example.com or enable JavaScript for the best experience.</p>
+    </div>
+  </noscript>
 </body>
 </html>
